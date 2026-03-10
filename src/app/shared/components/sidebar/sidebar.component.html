@@ -1,23 +1,48 @@
 <aside class="sidebar">
-  <div class="logo">
-    <h2>ESATIC</h2>
-    <span>M1 MBDS 2025-2026</span>
+  <div class="logo-area">
+    <img src="assets/logo-esatic.jpg" alt="ESATIC" class="logo-img" />
+    <span class="logo-sub">Gestion Pédagogique</span>
   </div>
 
-  <nav>
-    <ng-container *ngFor="let item of navItems">
-      
-        *ngIf="!item.roles || auth.hasRole(item.roles)"
-        [routerLink]="item.route"
-        routerLinkActive="active"
-        class="nav-item">
-        <span class="icon">{{ item.icon }}</span>
-        <span class="label">{{ item.label }}</span>
-      </a>
-    </ng-container>
+  <nav class="nav">
+    <span class="nav-section">NAVIGATION</span>
+
+    <a routerLink="/dashboard" routerLinkActive="active" class="nav-item">
+      <span class="material-icons-round">dashboard</span>
+      <span>Dashboard</span>
+    </a>
+    <a routerLink="/cours" routerLinkActive="active" class="nav-item">
+      <span class="material-icons-round">menu_book</span>
+      <span>Cours</span>
+    </a>
+    <a routerLink="/syllabus" routerLinkActive="active" class="nav-item">
+      <span class="material-icons-round">description</span>
+      <span>Syllabus</span>
+    </a>
+    <a routerLink="/progressions" routerLinkActive="active" class="nav-item">
+      <span class="material-icons-round">trending_up</span>
+      <span>Progressions</span>
+    </a>
+    <a routerLink="/reunions" routerLinkActive="active" class="nav-item">
+      <span class="material-icons-round">groups</span>
+      <span>Réunions</span>
+    </a>
+    <a routerLink="/notifications" routerLinkActive="active" class="nav-item">
+      <span class="material-icons-round">notifications</span>
+      <span>Notifications</span>
+    </a>
+    <a routerLink="/enseignants" routerLinkActive="active" class="nav-item"
+      *ngIf="auth.hasMinRole('CHEF_SERVICE')">
+      <span class="material-icons-round">school</span>
+      <span>Enseignants</span>
+    </a>
   </nav>
 
   <div class="sidebar-footer">
-    <span>Dr. JOHNSON</span>
+    <div class="footer-avatar">JN</div>
+    <div class="footer-info">
+      <span class="footer-name">Dr. JOHNSON</span>
+      <span class="footer-role">Encadrant</span>
+    </div>
   </div>
 </aside>

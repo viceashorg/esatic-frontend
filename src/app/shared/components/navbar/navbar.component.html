@@ -5,17 +5,26 @@
 
   <div class="navbar-right">
     <a routerLink="/notifications" class="notif-btn">
-      <span class="bell">🔔</span>
-      <span class="badge" *ngIf="(notifCount$ | async)! > 0">
+      <span class="material-icons-round">notifications_none</span>
+      <span class="badge" *ngIf="((notifCount$ | async) ?? 0) > 0">
         {{ notifCount$ | async }}
       </span>
     </a>
 
-    <div class="user-info" *ngIf="user">
-      <span class="user-name">{{ user.prenom }} {{ user.nom }}</span>
-      <span class="user-role">{{ user.role }}</span>
+    <div class="divider"></div>
+
+    <div class="user-card" *ngIf="user">
+      <div class="user-avatar">
+        {{ user.prenom[0] }}{{ user.nom[0] }}
+      </div>
+      <div class="user-info">
+        <span class="user-name">{{ user.prenom }} {{ user.nom }}</span>
+        <span class="user-role">{{ user.role }}</span>
+      </div>
     </div>
 
-    <button class="logout-btn" (click)="logout()">Déconnexion</button>
+    <button class="logout-btn" (click)="logout()">
+      <span class="material-icons-round">logout</span>
+    </button>
   </div>
 </nav>

@@ -1,1 +1,45 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  --blue:         #1E9BD7;
+  --blue-dark:    #0F7AAD;
+  --blue-deeper:  #0A5C82;
+  --blue-light:   #E8F6FD;
+  --blue-glow:    rgba(30,155,215,.18);
+  --navy:         #0B1E33;
+  --navy-mid:     #142844;
+  --navy-light:   #1D3557;
+  --white:        #FFFFFF;
+  --bg:           #F4F8FC;
+  --bg-alt:       #EDF3FA;
+  --text:         #0D1B2A;
+  --text-sub:     #4A6580;
+  --text-muted:   #8BA3B8;
+  --border:       #D9E6F0;
+  --success:      #0DC98A;
+  --warning:      #F5A623;
+  --danger:       #F03E3E;
+  --shadow-xs:    0 1px 3px rgba(11,30,51,.06);
+  --shadow-sm:    0 2px 8px rgba(11,30,51,.08);
+  --shadow-md:    0 8px 28px rgba(11,30,51,.12);
+  --shadow-blue:  0 8px 28px rgba(30,155,215,.25);
+  --r:            14px;
+  --r-sm:         10px;
+  --r-lg:         22px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { text-decoration: none; color: inherit; }
+
+.material-icons-round { font-size: 20px; line-height: 1; vertical-align: middle; }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }

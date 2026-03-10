@@ -15,7 +15,9 @@ import { SidebarComponent } from './components/sidebar/sidebar.component';
   ],
   exports: [
     NavbarComponent,
-    SidebarComponent
+    SidebarComponent,
+    CommonModule,
+    RouterModule
   ]
 })
 export class SharedModule {}

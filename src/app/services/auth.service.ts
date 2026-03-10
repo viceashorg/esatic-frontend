@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { Router } from '@angular/router';
+import { NotificationsService } from './notifications.service';
 import { environment } from '../../environments/environment';
 import { LoginRequest, LoginResponse, User, Role } from '../core/models';
 
@@ -11,7 +12,7 @@ export class AuthService {
   private userSubject = new BehaviorSubject<User | null>(this.getStoredUser());
   user$ = this.userSubject.asObservable();
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router, private notifService: NotificationsService) {}
 
   login(payload: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.api}/auth/login`, payload).pipe(
@@ -19,6 +20,7 @@ export class AuthService {
         localStorage.setItem('esatic_token', res.token);
         localStorage.setItem('esatic_user', JSON.stringify(res.user));
         this.userSubject.next(res.user);
+        setTimeout(() => this.notifService.initCount(), 100);
       })
     );
   }
@@ -52,3 +54,4 @@ export class AuthService {
     catch { return null; }
   }
 }
+

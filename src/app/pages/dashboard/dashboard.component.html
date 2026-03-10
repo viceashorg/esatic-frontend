@@ -1,91 +1,146 @@
 <div class="dashboard">
 
-  <div class="header">
-    <div>
+  <div class="page-header">
+    <div class="header-left">
       <h1>Tableau de bord</h1>
       <p>Bienvenue, <strong>{{ user?.prenom }} {{ user?.nom }}</strong></p>
     </div>
-    <span class="role-chip">{{ user?.role }}</span>
+    <span class="role-chip">
+      <span class="material-icons-round">verified</span>
+      {{ user?.role }}
+    </span>
   </div>
 
-  <!-- KPI Cards -->
+  <!-- KPI -->
   <div class="kpi-grid">
-    <div class="kpi-card blue">
-      <div class="kpi-icon">📚</div>
-      <div class="kpi-info">
-        <span class="kpi-value">{{ stats.nbCours }}</span>
-        <span class="kpi-label">Cours</span>
+    <div class="kpi-card">
+      <div class="kpi-icon blue">
+        <span class="material-icons-round">menu_book</span>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-val">{{ stats.nbCours }}</span>
+        <span class="kpi-lbl">Cours</span>
+      </div>
+      <span class="kpi-trend up">
+        <span class="material-icons-round">arrow_upward</span>
+      </span>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon green">
+        <span class="material-icons-round">description</span>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-val">{{ stats.nbSyllabus }}</span>
+        <span class="kpi-lbl">Syllabus</span>
       </div>
     </div>
-    <div class="kpi-card green">
-      <div class="kpi-icon">📋</div>
-      <div class="kpi-info">
-        <span class="kpi-value">{{ stats.nbSyllabus }}</span>
-        <span class="kpi-label">Syllabus</span>
+
+    <div class="kpi-card">
+      <div class="kpi-icon orange">
+        <span class="material-icons-round">trending_up</span>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-val">{{ stats.tauxMoyen }}%</span>
+        <span class="kpi-lbl">Progression moy.</span>
       </div>
     </div>
-    <div class="kpi-card orange">
-      <div class="kpi-icon">📈</div>
-      <div class="kpi-info">
-        <span class="kpi-value">{{ stats.tauxMoyen }}%</span>
-        <span class="kpi-label">Progression moy.</span>
+
+    <div class="kpi-card">
+      <div class="kpi-icon red">
+        <span class="material-icons-round">notifications_active</span>
       </div>
-    </div>
-    <div class="kpi-card red">
-      <div class="kpi-icon">🔔</div>
-      <div class="kpi-info">
-        <span class="kpi-value">{{ stats.nbNotifs }}</span>
-        <span class="kpi-label">Non lues</span>
+      <div class="kpi-body">
+        <span class="kpi-val">{{ notifCount$ | async }}</span>
+        <span class="kpi-lbl">Non lues</span>
       </div>
     </div>
   </div>
 
-  <!-- Volume horaire -->
-  <div class="volume-card" *ngIf="myStats">
-    <div class="volume-header">
-      <h3>Volume horaire annuel</h3>
-      <span class="alerte-chip attention" *ngIf="myStats.alerte === 'ATTENTION'">
-        ⚠️ Attention
-      </span>
-      <span class="alerte-chip critique" *ngIf="myStats.alerte === 'CRITIQUE'">
-        🚨 Critique
-      </span>
-    </div>
-    <div class="progress-track">
-      <div
-        class="progress-fill"
-        [style.width.%]="getVolumePercent()"
-        [class.warning]="myStats.alerte === 'ATTENTION'"
-        [class.danger]="myStats.alerte === 'CRITIQUE'">
+  <div class="bottom-grid">
+    <!-- Volume horaire -->
+    <div class="card volume-card" *ngIf="myStats">
+      <div class="card-header">
+        <span class="card-title">
+          <span class="material-icons-round">schedule</span>
+          Volume horaire annuel
+        </span>
+        <span class="alerte-chip attention" *ngIf="myStats.alerte === 'ATTENTION'">
+          <span class="material-icons-round">warning</span> Attention
+        </span>
+        <span class="alerte-chip critique" *ngIf="myStats.alerte === 'CRITIQUE'">
+          <span class="material-icons-round">error</span> Critique
+        </span>
       </div>
-    </div>
-    <div class="volume-meta">
-      <span>{{ myStats.volume_h_total }}h utilisées</span>
-      <span>{{ myStats.volume_h_restant }}h restantes / 300h max</span>
-    </div>
-  </div>
 
-  <!-- Notifications récentes -->
-  <div class="section-card">
-    <div class="section-header">
-      <h3>Notifications récentes</h3>
-      <a routerLink="/notifications" class="voir-tout">Voir tout →</a>
-    </div>
-    <div class="notif-list">
-      <div
-        class="notif-item"
-        *ngFor="let n of recentNotifs"
-        [class.unread]="!n.lu">
-        <div class="notif-dot" *ngIf="!n.lu"></div>
-        <div class="notif-content">
-          <strong>{{ n.titre }}</strong>
-          <p>{{ n.message }}</p>
-          <small>{{ n.created_at | date:'dd/MM/yyyy à HH:mm' }}</small>
+      <div class="volume-numbers">
+        <span class="vol-used">{{ myStats.volume_h_total }}h</span>
+        <span class="vol-sep">/</span>
+        <span class="vol-max">300h</span>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-fill"
+          [style.width.%]="getVolumePercent()"
+          [class.warning]="myStats.alerte === 'ATTENTION'"
+          [class.danger]="myStats.alerte === 'CRITIQUE'">
         </div>
       </div>
-      <p class="empty" *ngIf="recentNotifs.length === 0">
-        Aucune notification
-      </p>
+
+      <div class="volume-meta">
+        <span>{{ myStats.volume_h_total }}h utilisées ({{ getVolumePercent() }}%)</span>
+        <span class="restant">{{ myStats.volume_h_restant }}h restantes</span>
+      </div>
+
+      <div class="stats-row" *ngIf="myStats">
+        <div class="stat-pill">
+          <span class="material-icons-round">auto_stories</span>
+          {{ myStats.nb_cours }} cours
+        </div>
+        <div class="stat-pill">
+          <span class="material-icons-round">task_alt</span>
+          {{ myStats.nb_syllabus_valides }} validés
+        </div>
+        <div class="stat-pill">
+          <span class="material-icons-round">groups</span>
+          {{ myStats.nb_reunions }} réunions
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications récentes -->
+    <div class="card notif-card">
+      <div class="card-header">
+        <span class="card-title">
+          <span class="material-icons-round">inbox</span>
+          Notifications récentes
+        </span>
+        <a routerLink="/notifications" class="voir-tout">
+          Voir tout
+          <span class="material-icons-round">arrow_forward</span>
+        </a>
+      </div>
+
+      <div class="notif-list">
+        <div class="notif-item" *ngFor="let n of recentNotifs"
+          [class.unread]="!n.lu">
+          <div class="notif-indicator" *ngIf="!n.lu"></div>
+          <div class="notif-icon-wrap" [class.unread]="!n.lu">
+            <span class="material-icons-round">
+              {{ n.lu ? 'drafts' : 'mark_email_unread' }}
+            </span>
+          </div>
+          <div class="notif-body">
+            <strong>{{ n.titre }}</strong>
+            <p>{{ n.message }}</p>
+            <small>{{ n.created_at | date:'dd/MM/yyyy à HH:mm' }}</small>
+          </div>
+        </div>
+        <div class="notif-empty" *ngIf="recentNotifs.length === 0">
+          <span class="material-icons-round">check_circle</span>
+          <p>Tout est lu !</p>
+        </div>
+      </div>
     </div>
   </div>
 
