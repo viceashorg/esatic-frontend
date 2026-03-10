@@ -1,0 +1,21 @@
+<nav class="navbar">
+  <div class="navbar-left">
+    <span class="page-title">Plateforme Pédagogique — ESATIC</span>
+  </div>
+
+  <div class="navbar-right">
+    <a routerLink="/notifications" class="notif-btn">
+      <span class="bell">🔔</span>
+      <span class="badge" *ngIf="(notifCount$ | async)! > 0">
+        {{ notifCount$ | async }}
+      </span>
+    </a>
+
+    <div class="user-info" *ngIf="user">
+      <span class="user-name">{{ user.prenom }} {{ user.nom }}</span>
+      <span class="user-role">{{ user.role }}</span>
+    </div>
+
+    <button class="logout-btn" (click)="logout()">Déconnexion</button>
+  </div>
+</nav>

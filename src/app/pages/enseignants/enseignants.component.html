@@ -1,0 +1,255 @@
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1>Enseignants</h1>
+      <p>{{ enseignants.length }} enseignants enregistrés</p>
+    </div>
+    <button
+      class="btn-primary"
+      *ngIf="auth.hasMinRole('CHEF_SERVICE')"
+      (click)="showForm = !showForm">
+      {{ showForm ? 'Annuler' : '+ Nouvel enseignant' }}
+    </button>
+  </div>
+
+  <!-- Formulaire création -->
+  <div class="form-card" *ngIf="showForm">
+    <h3>Créer un compte enseignant</h3>
+    <form [formGroup]="form" (ngSubmit)="onCreate()">
+      <div class="form-grid">
+        <div class="field">
+          <label>Prénom *</label>
+          <input formControlName="prenom" placeholder="Ange" />
+        </div>
+        <div class="field">
+          <label>Nom *</label>
+          <input formControlName="nom" placeholder="Kouassi" />
+        </div>
+        <div class="field">
+          <label>Email *</label>
+          <input type="email" formControlName="email"
+            placeholder="a.kouassi@esatic.ci" />
+        </div>
+        <div class="field">
+          <label>Rôle</label>
+          <select formControlName="role">
+            <option value="ENSEIGNANT">Enseignant</option>
+            <option value="RESP_UP">Responsable UP</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="error-banner"   *ngIf="errorMsg">{{ errorMsg }}</div>
+      <div class="success-banner" *ngIf="successMsg">{{ successMsg }}</div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="showForm = false">
+          Annuler
+        </button>
+        <button type="submit" class="btn-primary"
+          [disabled]="form.invalid || loading">
+          {{ loading ? 'Création...' : 'Créer' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    <div class="loading" *ngIf="loading && enseignants.length === 0">
+      Chargement...
+    </div>
+    <table *ngIf="!loading || enseignants.length > 0">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Email</th>
+          <th>Rôle</th>
+          <th>Cours</th>
+          <th>Volume horaire</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let e of enseignants">
+          <td>
+            <div class="name-cell" (click)="selectEnseignant(e)">
+              <div class="avatar">
+                {{ e.prenom[0] }}{{ e.nom[0] }}
+              </div>
+              <div>
+                <strong>{{ e.prenom }} {{ e.nom }}</strong>
+              </div>
+            </div>
+          </td>
+          <td>{{ e.email }}</td>
+          <td>
+            <span class="role-badge" [class.resp]="e.role === 'RESP_UP'">
+              {{ e.role === 'RESP_UP' ? 'Resp. UP' : 'Enseignant' }}
+            </span>
+          </td>
+          <td>{{ e.nb_cours }}</td>
+          <td>
+            <div class="volume-cell">
+              <div class="mini-track">
+                <div class="mini-fill"
+                  [style.width.%]="getVolumePercent(e)"
+                  [style.background]="getVolumeColor(e.volume_h_total)">
+                </div>
+              </div>
+              <span class="vol-text">
+                {{ e.volume_h_total }}h / 300h
+              </span>
+            </div>
+          </td>
+          <td>
+            <span class="status-badge"
+              [class.active]="e.actif"
+              [class.inactive]="!e.actif">
+              {{ e.actif ? 'Actif' : 'Inactif' }}
+            </span>
+          </td>
+          <td>
+            <div class="row-actions">
+              <button class="btn-sm blue" (click)="selectEnseignant(e)">
+                Voir
+              </button>
+              <button
+                class="btn-sm"
+                [class.red]="e.actif"
+                [class.green]="!e.actif"
+                *ngIf="auth.hasMinRole('CHEF_SERVICE')"
+                (click)="toggleActif(e)">
+                {{ e.actif ? 'Désactiver' : 'Activer' }}
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="empty" *ngIf="!loading && enseignants.length === 0">
+      Aucun enseignant trouvé
+    </p>
+  </div>
+
+  <!-- Overlay -->
+  <div class="detail-overlay" *ngIf="selected" (click)="closeDetail()"></div>
+
+  <!-- Panel détail -->
+  <div class="detail-panel" *ngIf="selected">
+    <div class="detail-header">
+      <div class="detail-avatar">
+        {{ selected.prenom[0] }}{{ selected.nom[0] }}
+      </div>
+      <div>
+        <h2>{{ selected.prenom }} {{ selected.nom }}</h2>
+        <span class="role-badge" [class.resp]="selected.role === 'RESP_UP'">
+          {{ selected.role === 'RESP_UP' ? 'Resp. UP' : 'Enseignant' }}
+        </span>
+      </div>
+      <button class="close-btn" (click)="closeDetail()">✕</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" *ngIf="selectedStats">
+      <div class="stat-item">
+        <span class="stat-value">{{ selectedStats.nb_cours }}</span>
+        <span class="stat-label">Cours</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">{{ selectedStats.taux_moyen_progression }}%</span>
+        <span class="stat-label">Progression moy.</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">{{ selectedStats.nb_syllabus_valides }}</span>
+        <span class="stat-label">Syllabus validés</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value">{{ selectedStats.nb_reunions }}</span>
+        <span class="stat-label">Réunions</span>
+      </div>
+    </div>
+
+    <!-- Volume horaire -->
+    <div class="volume-section" *ngIf="selectedStats">
+      <div class="volume-header">
+        <span>Volume horaire annuel</span>
+        <span class="alerte-chip"
+          *ngIf="selectedStats.alerte"
+          [ngClass]="getAlerteClass(selectedStats.alerte)">
+          ⚠️ {{ selectedStats.alerte }}
+        </span>
+      </div>
+      <div class="vol-track">
+        <div class="vol-fill"
+          [style.width.%]="(selectedStats.volume_h_total / 300) * 100"
+          [style.background]="getVolumeColor(selectedStats.volume_h_total)">
+        </div>
+      </div>
+      <div class="vol-meta">
+        <span>{{ selectedStats.volume_h_total }}h utilisées</span>
+        <span>{{ selectedStats.volume_h_restant }}h restantes</span>
+      </div>
+    </div>
+
+    <!-- Mode édition -->
+    <div class="edit-section" *ngIf="editMode">
+      <h4>Modifier le profil</h4>
+      <form [formGroup]="editForm" (ngSubmit)="onUpdate()">
+        <div class="field">
+          <label>Prénom</label>
+          <input formControlName="prenom" />
+        </div>
+        <div class="field">
+          <label>Nom</label>
+          <input formControlName="nom" />
+        </div>
+        <div class="field checkbox-field" *ngIf="auth.hasMinRole('CHEF_SERVICE')">
+          <label>
+            <input type="checkbox" formControlName="actif" />
+            Compte actif
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary"
+            (click)="editMode = false">
+            Annuler
+          </button>
+          <button type="submit" class="btn-primary"
+            [disabled]="editForm.invalid">
+            Sauvegarder
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Cours de l'enseignant -->
+    <div class="cours-section" *ngIf="!editMode">
+      <h4>Cours assignés</h4>
+      <div class="cours-list">
+        <div class="cours-item" *ngFor="let c of selected.cours">
+          <div>
+            <strong>{{ c.intitule }}</strong>
+            <small>{{ c.code }} — {{ c.semestre }}</small>
+          </div>
+          <span class="vol-badge">{{ c.volume_h }}h</span>
+        </div>
+        <p class="empty-list" *ngIf="!selected.cours?.length">
+          Aucun cours assigné
+        </p>
+      </div>
+    </div>
+
+    <!-- Bouton édition -->
+    <button
+      class="btn-edit-profile"
+      *ngIf="!editMode"
+      (click)="editMode = true">
+      ✏️ Modifier le profil
+    </button>
+
+  </div>
+
+</div>

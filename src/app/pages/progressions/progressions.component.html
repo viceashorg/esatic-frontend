@@ -1,0 +1,123 @@
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1>Progressions</h1>
+      <p>{{ progressions.length }} progressions enregistrées</p>
+    </div>
+    <button
+      class="btn-primary"
+      *ngIf="auth.hasMinRole('ENSEIGNANT')"
+      (click)="showForm = !showForm">
+      {{ showForm ? 'Annuler' : '+ Nouvelle progression' }}
+    </button>
+  </div>
+
+  <!-- Formulaire création -->
+  <div class="form-card" *ngIf="showForm">
+    <h3>Enregistrer une progression</h3>
+    <form [formGroup]="form" (ngSubmit)="onCreate()">
+      <div class="form-grid">
+        <div class="field">
+          <label>ID Cours *</label>
+          <input formControlName="cours_id" placeholder="UUID du cours" />
+        </div>
+        <div class="field">
+          <label>Taux d'avancement * (0-100%)</label>
+          <input type="number" formControlName="taux_avancement"
+            min="0" max="100" />
+        </div>
+        <div class="field full">
+          <label>Commentaire</label>
+          <textarea formControlName="commentaire" rows="3"
+            placeholder="Observations..."></textarea>
+        </div>
+      </div>
+
+      <div class="error-banner"   *ngIf="errorMsg">{{ errorMsg }}</div>
+      <div class="success-banner" *ngIf="successMsg">{{ successMsg }}</div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="showForm = false">
+          Annuler
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="form.invalid || loading">
+          {{ loading ? 'Enregistrement...' : 'Enregistrer' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Cards progressions -->
+  <div class="loading" *ngIf="loading && progressions.length === 0">
+    Chargement...
+  </div>
+
+  <div class="prog-grid" *ngIf="progressions.length > 0">
+    <div class="prog-card" *ngFor="let p of progressions">
+
+      <!-- Mode affichage -->
+      <ng-container *ngIf="editId !== p.id">
+        <div class="prog-header">
+          <div class="prog-info">
+            <strong>{{ p.cours?.intitule || p.cours_id }}</strong>
+            <small *ngIf="p.cours?.code">{{ p.cours?.code }}</small>
+          </div>
+          <span class="taux-badge"
+            [style.background]="getColor(p.taux_avancement) + '22'"
+            [style.color]="getColor(p.taux_avancement)">
+            {{ p.taux_avancement }}%
+          </span>
+        </div>
+
+        <div class="prog-bar-track">
+          <div class="prog-bar-fill"
+            [style.width.%]="p.taux_avancement"
+            [style.background]="getColor(p.taux_avancement)">
+          </div>
+        </div>
+
+        <p class="commentaire" *ngIf="p.commentaire">{{ p.commentaire }}</p>
+        <small class="date">{{ p.created_at | date:'dd/MM/yyyy' }}</small>
+
+        <button
+          class="btn-edit"
+          *ngIf="auth.hasMinRole('ENSEIGNANT')"
+          (click)="startEdit(p)">
+          ✏️ Modifier
+        </button>
+      </ng-container>
+
+      <!-- Mode édition -->
+      <ng-container *ngIf="editId === p.id">
+        <h4>Modifier la progression</h4>
+        <form [formGroup]="editForm" (ngSubmit)="onUpdate(p.id)">
+          <div class="field">
+            <label>Taux d'avancement (0-100%)</label>
+            <input type="number" formControlName="taux_avancement"
+              min="0" max="100" />
+          </div>
+          <div class="field">
+            <label>Commentaire</label>
+            <textarea formControlName="commentaire" rows="2"></textarea>
+          </div>
+          <div class="edit-actions">
+            <button type="button" class="btn-secondary" (click)="cancelEdit()">
+              Annuler
+            </button>
+            <button type="submit" class="btn-primary"
+              [disabled]="editForm.invalid">
+              Sauvegarder
+            </button>
+          </div>
+        </form>
+      </ng-container>
+
+    </div>
+  </div>
+
+  <p class="empty" *ngIf="!loading && progressions.length === 0">
+    Aucune progression enregistrée
+  </p>
+
+</div>

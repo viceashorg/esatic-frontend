@@ -1,0 +1,165 @@
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1>Réunions</h1>
+      <p>{{ reunions.length }} réunions enregistrées</p>
+    </div>
+    <button
+      class="btn-primary"
+      *ngIf="auth.hasMinRole('RESP_UP')"
+      (click)="showForm = !showForm">
+      {{ showForm ? 'Annuler' : '+ Nouvelle réunion' }}
+    </button>
+  </div>
+
+  <!-- Formulaire création -->
+  <div class="form-card" *ngIf="showForm">
+    <h3>Planifier une réunion</h3>
+    <form [formGroup]="form" (ngSubmit)="onCreate()">
+      <div class="form-grid">
+        <div class="field">
+          <label>Titre *</label>
+          <input formControlName="titre" placeholder="Réunion pédagogique S1" />
+        </div>
+        <div class="field">
+          <label>Date et heure *</label>
+          <input type="datetime-local" formControlName="date_reunion" />
+        </div>
+        <div class="field">
+          <label>Lieu</label>
+          <input formControlName="lieu" placeholder="Salle A101" />
+        </div>
+        <div class="field full">
+          <label>Ordre du jour</label>
+          <textarea formControlName="ordre_du_jour" rows="3"
+            placeholder="Points à aborder..."></textarea>
+        </div>
+      </div>
+
+      <div class="error-banner"   *ngIf="errorMsg">{{ errorMsg }}</div>
+      <div class="success-banner" *ngIf="successMsg">{{ successMsg }}</div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="showForm = false">
+          Annuler
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="form.invalid || loading">
+          {{ loading ? 'Création...' : 'Créer la réunion' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Liste réunions -->
+  <div class="reunions-grid">
+    <div class="reunion-card"
+      *ngFor="let r of reunions"
+      (click)="selectReunion(r)">
+      <div class="reunion-header">
+        <h3>{{ r.titre }}</h3>
+        <span class="statut-badge" [ngClass]="getStatutClass(r.statut)">
+          {{ getStatutLabel(r.statut) }}
+        </span>
+      </div>
+      <div class="reunion-meta">
+        <span>📅 {{ r.date_reunion | date:'dd/MM/yyyy à HH:mm' }}</span>
+        <span *ngIf="r.lieu">📍 {{ r.lieu }}</span>
+        <span>👤 {{ r.organisateur?.prenom }} {{ r.organisateur?.nom }}</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="empty" *ngIf="!loading && reunions.length === 0">
+    Aucune réunion trouvée
+  </p>
+
+  <!-- Panel détail -->
+  <div class="detail-overlay" *ngIf="selected" (click)="closeDetail()"></div>
+  <div class="detail-panel" *ngIf="selected">
+    <div class="detail-header">
+      <h2>{{ selected.titre }}</h2>
+      <button class="close-btn" (click)="closeDetail()">✕</button>
+    </div>
+
+    <div class="detail-info">
+      <div class="info-row">
+        <span class="label">Date</span>
+        <span>{{ selected.date_reunion | date:'dd/MM/yyyy à HH:mm' }}</span>
+      </div>
+      <div class="info-row" *ngIf="selected.lieu">
+        <span class="label">Lieu</span>
+        <span>{{ selected.lieu }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Statut</span>
+        <span class="statut-badge" [ngClass]="getStatutClass(selected.statut)">
+          {{ getStatutLabel(selected.statut) }}
+        </span>
+      </div>
+      <div class="info-row" *ngIf="selected.ordre_du_jour">
+        <span class="label">Ordre du jour</span>
+        <span>{{ selected.ordre_du_jour }}</span>
+      </div>
+    </div>
+
+    <!-- Actions statut -->
+    <div class="statut-actions" *ngIf="auth.hasMinRole('RESP_UP')">
+      <button
+        *ngIf="selected.statut === 'PLANIFIEE'"
+        class="btn-sm green"
+        (click)="updateStatut(selected.id, 'EN_COURS')">
+        ▶ Démarrer
+      </button>
+      <button
+        *ngIf="selected.statut === 'EN_COURS'"
+        class="btn-sm blue"
+        (click)="updateStatut(selected.id, 'TERMINEE')">
+        ✓ Terminer
+      </button>
+      <button
+        *ngIf="selected.statut === 'PLANIFIEE'"
+        class="btn-sm red"
+        (click)="updateStatut(selected.id, 'ANNULEE')">
+        Annuler
+      </button>
+    </div>
+
+    <!-- Participants -->
+    <div class="participants-section">
+      <h4>Participants ({{ selected.participants?.length || 0 }})</h4>
+
+      <!-- Ajouter participant -->
+      <div class="add-participant" *ngIf="auth.hasMinRole('RESP_UP')">
+        <input
+          [(ngModel)]="participantUserId"
+          placeholder="UUID de l'utilisateur" />
+        <button class="btn-sm blue"
+          (click)="addParticipant(selected.id)">
+          + Ajouter
+        </button>
+      </div>
+
+      <div class="participant-list">
+        <div class="participant-row"
+          *ngFor="let p of selected.participants">
+          <span>{{ p.prenom }} {{ p.nom }}</span>
+          <div class="presence-toggle">
+            <button
+              class="btn-sm"
+              [class.green]="p.present"
+              [class.gray]="!p.present"
+              (click)="marquerPresence(selected!.id, p.user_id, !p.present)">
+              {{ p.present ? '✓ Présent' : 'Absent' }}
+            </button>
+          </div>
+        </div>
+        <p class="empty-participants"
+          *ngIf="!selected.participants?.length">
+          Aucun participant
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>

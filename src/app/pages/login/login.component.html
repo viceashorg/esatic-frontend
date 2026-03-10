@@ -1,0 +1,46 @@
+<div class="login-wrapper">
+  <div class="login-card">
+
+    <div class="logo">
+      <h1>ESATIC</h1>
+      <p>Plateforme de gestion pédagogique</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="field">
+        <label>Email</label>
+        <input
+          type="email"
+          formControlName="email"
+          placeholder="nom@esatic.ci" />
+        <span class="err"
+          *ngIf="form.get('email')?.touched && form.get('email')?.invalid">
+          Email invalide
+        </span>
+      </div>
+
+      <div class="field">
+        <label>Mot de passe</label>
+        <input
+          type="password"
+          formControlName="password"
+          placeholder="••••••••" />
+        <span class="err"
+          *ngIf="form.get('password')?.touched && form.get('password')?.invalid">
+          Mot de passe requis
+        </span>
+      </div>
+
+      <div class="error-banner" *ngIf="errorMsg">{{ errorMsg }}</div>
+
+      <button type="submit" [disabled]="loading || form.invalid">
+        <span *ngIf="!loading">Se connecter</span>
+        <span *ngIf="loading">Connexion en cours...</span>
+      </button>
+    </form>
+
+    <div class="footer">
+      M1 MBDS — Année 2025-2026 — Encadrant : Dr. JOHNSON
+    </div>
+  </div>
+</div>

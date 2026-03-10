@@ -1,0 +1,23 @@
+<aside class="sidebar">
+  <div class="logo">
+    <h2>ESATIC</h2>
+    <span>M1 MBDS 2025-2026</span>
+  </div>
+
+  <nav>
+    <ng-container *ngFor="let item of navItems">
+      
+        *ngIf="!item.roles || auth.hasRole(item.roles)"
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        class="nav-item">
+        <span class="icon">{{ item.icon }}</span>
+        <span class="label">{{ item.label }}</span>
+      </a>
+    </ng-container>
+  </nav>
+
+  <div class="sidebar-footer">
+    <span>Dr. JOHNSON</span>
+  </div>
+</aside>

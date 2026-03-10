@@ -1,0 +1,92 @@
+<div class="dashboard">
+
+  <div class="header">
+    <div>
+      <h1>Tableau de bord</h1>
+      <p>Bienvenue, <strong>{{ user?.prenom }} {{ user?.nom }}</strong></p>
+    </div>
+    <span class="role-chip">{{ user?.role }}</span>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="kpi-icon">📚</div>
+      <div class="kpi-info">
+        <span class="kpi-value">{{ stats.nbCours }}</span>
+        <span class="kpi-label">Cours</span>
+      </div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-icon">📋</div>
+      <div class="kpi-info">
+        <span class="kpi-value">{{ stats.nbSyllabus }}</span>
+        <span class="kpi-label">Syllabus</span>
+      </div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-icon">📈</div>
+      <div class="kpi-info">
+        <span class="kpi-value">{{ stats.tauxMoyen }}%</span>
+        <span class="kpi-label">Progression moy.</span>
+      </div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-icon">🔔</div>
+      <div class="kpi-info">
+        <span class="kpi-value">{{ stats.nbNotifs }}</span>
+        <span class="kpi-label">Non lues</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Volume horaire -->
+  <div class="volume-card" *ngIf="myStats">
+    <div class="volume-header">
+      <h3>Volume horaire annuel</h3>
+      <span class="alerte-chip attention" *ngIf="myStats.alerte === 'ATTENTION'">
+        ⚠️ Attention
+      </span>
+      <span class="alerte-chip critique" *ngIf="myStats.alerte === 'CRITIQUE'">
+        🚨 Critique
+      </span>
+    </div>
+    <div class="progress-track">
+      <div
+        class="progress-fill"
+        [style.width.%]="getVolumePercent()"
+        [class.warning]="myStats.alerte === 'ATTENTION'"
+        [class.danger]="myStats.alerte === 'CRITIQUE'">
+      </div>
+    </div>
+    <div class="volume-meta">
+      <span>{{ myStats.volume_h_total }}h utilisées</span>
+      <span>{{ myStats.volume_h_restant }}h restantes / 300h max</span>
+    </div>
+  </div>
+
+  <!-- Notifications récentes -->
+  <div class="section-card">
+    <div class="section-header">
+      <h3>Notifications récentes</h3>
+      <a routerLink="/notifications" class="voir-tout">Voir tout →</a>
+    </div>
+    <div class="notif-list">
+      <div
+        class="notif-item"
+        *ngFor="let n of recentNotifs"
+        [class.unread]="!n.lu">
+        <div class="notif-dot" *ngIf="!n.lu"></div>
+        <div class="notif-content">
+          <strong>{{ n.titre }}</strong>
+          <p>{{ n.message }}</p>
+          <small>{{ n.created_at | date:'dd/MM/yyyy à HH:mm' }}</small>
+        </div>
+      </div>
+      <p class="empty" *ngIf="recentNotifs.length === 0">
+        Aucune notification
+      </p>
+    </div>
+  </div>
+
+</div>

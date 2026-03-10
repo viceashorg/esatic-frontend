@@ -1,0 +1,167 @@
+.page {
+  padding: 32px;
+  background: #f5f7fa;
+  min-height: calc(100vh - 64px);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28px;
+
+  h1 { margin: 0 0 6px; color: #1f3864; font-size: 1.8rem; }
+  p  { margin: 0; font-size: 0.875rem; color: #888; }
+}
+
+.unread-count {
+  background: #e53935;
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-filter {
+  padding: 9px 16px;
+  background: #f5f5f5;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s;
+
+  &.active {
+    background: #1f3864;
+    color: #fff;
+    border-color: #1f3864;
+  }
+
+  &:hover:not(.active) { background: #e0e0e0; }
+}
+
+.btn-secondary {
+  padding: 9px 16px;
+  background: #fff;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #e8f5e9;
+    border-color: #43a047;
+    color: #2e7d32;
+  }
+}
+
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notif-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-left: 4px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover { transform: translateX(4px); }
+
+  &.unread {
+    border-left-color: #2e75b6;
+    background: #f0f7ff;
+  }
+}
+
+.notif-left {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.notif-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+
+  &.unread-dot {
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: -2px;
+      width: 8px;
+      height: 8px;
+      background: #e53935;
+      border-radius: 50%;
+    }
+  }
+}
+
+.notif-body {
+  flex: 1;
+
+  strong {
+    display: block;
+    font-size: 0.9rem;
+    color: #1f3864;
+    margin-bottom: 4px;
+  }
+
+  p {
+    margin: 0 0 6px;
+    font-size: 0.82rem;
+    color: #555;
+    line-height: 1.4;
+  }
+
+  small { color: #aaa; font-size: 0.78rem; }
+}
+
+.notif-right {
+  flex-shrink: 0;
+  margin-left: 16px;
+}
+
+.lu-badge {
+  background: #f5f5f5;
+  color: #aaa;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+}
+
+.unlu-badge {
+  background: #e3f2fd;
+  color: #1565c0;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.loading, .empty {
+  text-align: center;
+  padding: 48px;
+  color: #aaa;
+  font-size: 0.9rem;
+}

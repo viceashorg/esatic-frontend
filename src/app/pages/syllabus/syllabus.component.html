@@ -1,0 +1,135 @@
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1>Syllabus</h1>
+      <p>{{ syllabus.length }} syllabus enregistrés</p>
+    </div>
+    <button
+      class="btn-primary"
+      *ngIf="auth.hasMinRole('ENSEIGNANT')"
+      (click)="showForm = !showForm">
+      {{ showForm ? 'Annuler' : '+ Nouveau syllabus' }}
+    </button>
+  </div>
+
+  <!-- Formulaire création -->
+  <div class="form-card" *ngIf="showForm">
+    <h3>Créer un syllabus</h3>
+    <form [formGroup]="form" (ngSubmit)="onCreate()">
+      <div class="field">
+        <label>ID Cours *</label>
+        <input formControlName="cours_id" placeholder="UUID du cours" />
+      </div>
+      <div class="field">
+        <label>Contenu *</label>
+        <textarea formControlName="contenu" rows="4"
+          placeholder="Décrivez le contenu du cours..."></textarea>
+      </div>
+      <div class="field">
+        <label>Objectifs</label>
+        <textarea formControlName="objectifs" rows="3"
+          placeholder="Objectifs pédagogiques..."></textarea>
+      </div>
+
+      <div class="error-banner"   *ngIf="errorMsg">{{ errorMsg }}</div>
+      <div class="success-banner" *ngIf="successMsg">{{ successMsg }}</div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="showForm = false">
+          Annuler
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="form.invalid || loading">
+          {{ loading ? 'Création...' : 'Créer' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Workflow legend -->
+  <div class="workflow-legend">
+    <span class="step">Brouillon</span>
+    <span class="arrow">→</span>
+    <span class="step">En attente UP</span>
+    <span class="arrow">→</span>
+    <span class="step">En attente Chef</span>
+    <span class="arrow">→</span>
+    <span class="step">En attente Directeur</span>
+    <span class="arrow">→</span>
+    <span class="step final">Validé ✓</span>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    <div class="loading" *ngIf="loading && syllabus.length === 0">
+      Chargement...
+    </div>
+    <table *ngIf="!loading || syllabus.length > 0">
+      <thead>
+        <tr>
+          <th>Cours</th>
+          <th>Statut</th>
+          <th>Créé le</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let s of syllabus">
+          <td>
+            <strong>{{ s.cours?.intitule || '—' }}</strong>
+            <small *ngIf="s.cours?.code"> — {{ s.cours?.code }}</small>
+          </td>
+          <td>
+            <span class="statut-badge" [ngClass]="getStatutClass(s.statut)">
+              {{ getStatutLabel(s.statut) }}
+            </span>
+          </td>
+          <td>{{ s.created_at | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <div class="action-btns">
+              <!-- Soumettre à UP -->
+              <button
+                *ngIf="s.statut === 'BROUILLON' && auth.hasMinRole('ENSEIGNANT')"
+                class="btn-sm blue"
+                (click)="updateStatut(s.id, 'EN_ATTENTE_UP')">
+                Soumettre UP
+              </button>
+              <!-- Valider vers Chef -->
+              <button
+                *ngIf="s.statut === 'EN_ATTENTE_UP' && auth.hasMinRole('RESP_UP')"
+                class="btn-sm green"
+                (click)="updateStatut(s.id, 'EN_ATTENTE_CHEF')">
+                → Chef
+              </button>
+              <!-- Valider vers Directeur -->
+              <button
+                *ngIf="s.statut === 'EN_ATTENTE_CHEF' && auth.hasMinRole('CHEF_SERVICE')"
+                class="btn-sm green"
+                (click)="updateStatut(s.id, 'EN_ATTENTE_DIRECTEUR')">
+                → Directeur
+              </button>
+              <!-- Validation finale -->
+              <button
+                *ngIf="s.statut === 'EN_ATTENTE_DIRECTEUR' && auth.hasMinRole('DIRECTEUR')"
+                class="btn-sm validate"
+                (click)="updateStatut(s.id, 'VALIDE')">
+                ✓ Valider
+              </button>
+              <!-- Rejeter -->
+              <button
+                *ngIf="canReject(s) && auth.hasMinRole('RESP_UP')"
+                class="btn-sm red"
+                (click)="updateStatut(s.id, 'REJETE')">
+                Rejeter
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="empty" *ngIf="!loading && syllabus.length === 0">
+      Aucun syllabus trouvé
+    </p>
+  </div>
+
+</div>
