@@ -5,131 +5,147 @@
       <h1>Syllabus</h1>
       <p>{{ syllabus.length }} syllabus enregistrés</p>
     </div>
-    <button
-      class="btn-primary"
-      *ngIf="auth.hasMinRole('ENSEIGNANT')"
-      (click)="showForm = !showForm">
-      {{ showForm ? 'Annuler' : '+ Nouveau syllabus' }}
-    </button>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="openForm()" *ngIf="!showForm && auth.hasMinRole('ENSEIGNANT')">
+        <span class="material-icons-round">add</span>
+        Nouveau syllabus
+      </button>
+      <button class="btn-ghost" (click)="cancelForm()" *ngIf="showForm">
+        <span class="material-icons-round">close</span>
+        Annuler
+      </button>
+    </div>
   </div>
 
-  <!-- Formulaire création -->
+  <!-- Succès global -->
+  <div class="success-msg" *ngIf="successMsg">
+    <span class="material-icons-round">check_circle</span>{{ successMsg }}
+  </div>
+
+  <!-- Formulaire -->
   <div class="form-card" *ngIf="showForm">
-    <h3>Créer un syllabus</h3>
-    <form [formGroup]="form" (ngSubmit)="onCreate()">
+    <div class="form-card-header">
+      <span class="material-icons-round">description</span>
+      <h2>Créer un syllabus</h2>
+    </div>
+
+    <div class="loading-overlay" *ngIf="loadingCours">
+      <span class="spinner"></span> Chargement des cours...
+    </div>
+
+    <div class="empty-form-msg" *ngIf="!loadingCours && coursList.length === 0">
+      <span class="material-icons-round">info</span>
+      Tous vos cours ont déjà un syllabus, ou aucun cours ne vous est attribué.
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onCreate()" *ngIf="!loadingCours && coursList.length > 0">
+
       <div class="field">
-        <label>ID Cours *</label>
-        <input formControlName="cours_id" placeholder="UUID du cours" />
-      </div>
-      <div class="field">
-        <label>Contenu *</label>
-        <textarea formControlName="contenu" rows="4"
-          placeholder="Décrivez le contenu du cours..."></textarea>
-      </div>
-      <div class="field">
-        <label>Objectifs</label>
-        <textarea formControlName="objectifs" rows="3"
-          placeholder="Objectifs pédagogiques..."></textarea>
+        <label>Cours concerné <span class="req">*</span></label>
+        <div class="select-wrap">
+          <span class="material-icons-round">menu_book</span>
+          <select formControlName="cours_id">
+            <option value="">— Sélectionner un cours —</option>
+            <option *ngFor="let c of coursList" [value]="c.id">
+              [{{ c.code }}] {{ c.intitule }} · {{ c.semestre }}
+            </option>
+          </select>
+        </div>
       </div>
 
-      <div class="error-banner"   *ngIf="errorMsg">{{ errorMsg }}</div>
-      <div class="success-banner" *ngIf="successMsg">{{ successMsg }}</div>
+      <div class="field">
+        <label>Objectifs du cours <span class="req">*</span></label>
+        <textarea formControlName="objectifs" rows="3"
+          placeholder="Décrire les objectifs pédagogiques du cours..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Compétences visées <span class="req">*</span></label>
+        <textarea formControlName="competences" rows="3"
+          placeholder="Lister les compétences que l'étudiant acquerra..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Contenu détaillé du cours <span class="req">*</span></label>
+        <textarea formControlName="contenu" rows="5"
+          placeholder="Décrire le contenu chapitre par chapitre..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Modalités d'évaluation <span class="req">*</span></label>
+        <textarea formControlName="modalites_evaluation" rows="3"
+          placeholder="Ex: Contrôle continu 40% + Examen final 60%..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Références bibliographiques</label>
+        <textarea formControlName="references_bibliographiques" rows="3"
+          placeholder="Ouvrages, articles, ressources en ligne recommandés..."></textarea>
+      </div>
+
+      <div class="error-msg" *ngIf="errorMsg">
+        <span class="material-icons-round">error_outline</span>{{ errorMsg }}
+      </div>
 
       <div class="form-actions">
-        <button type="button" class="btn-secondary" (click)="showForm = false">
-          Annuler
-        </button>
-        <button type="submit" class="btn-primary" [disabled]="form.invalid || loading">
-          {{ loading ? 'Création...' : 'Créer' }}
+        <button type="button" class="btn-ghost" (click)="cancelForm()">Annuler</button>
+        <button type="submit" class="btn-primary" [disabled]="loading || form.invalid">
+          <span class="material-icons-round">send</span>
+          Déposer le syllabus
         </button>
       </div>
     </form>
   </div>
 
-  <!-- Workflow legend -->
-  <div class="workflow-legend">
-    <span class="step">Brouillon</span>
-    <span class="arrow">→</span>
-    <span class="step">En attente UP</span>
-    <span class="arrow">→</span>
-    <span class="step">En attente Chef</span>
-    <span class="arrow">→</span>
-    <span class="step">En attente Directeur</span>
-    <span class="arrow">→</span>
-    <span class="step final">Validé ✓</span>
+  <!-- Liste -->
+  <div class="syllabus-list" *ngIf="!loading">
+    <div class="syllabus-item" *ngFor="let s of syllabus">
+      <div class="syllabus-left">
+        <div class="syllabus-icon">
+          <span class="material-icons-round">description</span>
+        </div>
+        <div class="syllabus-info">
+          <h3>{{ s.cours?.intitule || 'Cours inconnu' }}</h3>
+          <span class="code">{{ s.cours?.code }}</span>
+        </div>
+      </div>
+
+      <div class="syllabus-right">
+        <span class="statut-badge" [class]="getStatutColor(s.statut)">
+          {{ getStatutLabel(s.statut) }}
+        </span>
+        <small>{{ s.created_at | date:'dd/MM/yyyy' }}</small>
+
+        <div class="syllabus-actions">
+          <!-- Soumettre si brouillon -->
+          <button class="btn-sm btn-blue"
+            *ngIf="s.statut === 'BROUILLON'"
+            (click)="updateStatut(s.id, 'EN_ATTENTE_UP')">
+            <span class="material-icons-round">send</span>
+            Soumettre
+          </button>
+          <!-- Valider si rôle adéquat -->
+          <button class="btn-sm btn-green"
+            *ngIf="canValidate(s)"
+            (click)="updateStatut(s.id, getNextStatut(s))">
+            <span class="material-icons-round">check_circle</span>
+            Valider
+          </button>
+          <!-- Rejeter -->
+          <button class="btn-sm btn-red"
+            *ngIf="canReject(s)"
+            (click)="updateStatut(s.id, 'REJETE')">
+            <span class="material-icons-round">cancel</span>
+            Rejeter
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Table -->
-  <div class="table-card">
-    <div class="loading" *ngIf="loading && syllabus.length === 0">
-      Chargement...
-    </div>
-    <table *ngIf="!loading || syllabus.length > 0">
-      <thead>
-        <tr>
-          <th>Cours</th>
-          <th>Statut</th>
-          <th>Créé le</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let s of syllabus">
-          <td>
-            <strong>{{ s.cours?.intitule || '—' }}</strong>
-            <small *ngIf="s.cours?.code"> — {{ s.cours?.code }}</small>
-          </td>
-          <td>
-            <span class="statut-badge" [ngClass]="getStatutClass(s.statut)">
-              {{ getStatutLabel(s.statut) }}
-            </span>
-          </td>
-          <td>{{ s.created_at | date:'dd/MM/yyyy' }}</td>
-          <td>
-            <div class="action-btns">
-              <!-- Soumettre à UP -->
-              <button
-                *ngIf="s.statut === 'BROUILLON' && auth.hasMinRole('ENSEIGNANT')"
-                class="btn-sm blue"
-                (click)="updateStatut(s.id, 'EN_ATTENTE_UP')">
-                Soumettre UP
-              </button>
-              <!-- Valider vers Chef -->
-              <button
-                *ngIf="s.statut === 'EN_ATTENTE_UP' && auth.hasMinRole('RESP_UP')"
-                class="btn-sm green"
-                (click)="updateStatut(s.id, 'EN_ATTENTE_CHEF')">
-                → Chef
-              </button>
-              <!-- Valider vers Directeur -->
-              <button
-                *ngIf="s.statut === 'EN_ATTENTE_CHEF' && auth.hasMinRole('CHEF_SERVICE')"
-                class="btn-sm green"
-                (click)="updateStatut(s.id, 'EN_ATTENTE_DIRECTEUR')">
-                → Directeur
-              </button>
-              <!-- Validation finale -->
-              <button
-                *ngIf="s.statut === 'EN_ATTENTE_DIRECTEUR' && auth.hasMinRole('DIRECTEUR')"
-                class="btn-sm validate"
-                (click)="updateStatut(s.id, 'VALIDE')">
-                ✓ Valider
-              </button>
-              <!-- Rejeter -->
-              <button
-                *ngIf="canReject(s) && auth.hasMinRole('RESP_UP')"
-                class="btn-sm red"
-                (click)="updateStatut(s.id, 'REJETE')">
-                Rejeter
-              </button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <p class="empty" *ngIf="!loading && syllabus.length === 0">
-      Aucun syllabus trouvé
-    </p>
+  <div class="empty-state" *ngIf="!loading && syllabus.length === 0">
+    <span class="material-icons-round">description</span>
+    <p>Aucun syllabus déposé</p>
   </div>
 
 </div>

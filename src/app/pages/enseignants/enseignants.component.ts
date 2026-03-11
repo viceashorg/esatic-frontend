@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { EnseignantsService } from '../../services/enseignants.service';
 import { AuthService } from '../../services/auth.service';
-import { Enseignant, EnseignantStats } from '../../core/models';
+import { Enseignant } from '../../core/models';
 
 @Component({
   selector: 'app-enseignants',
@@ -10,33 +10,35 @@ import { Enseignant, EnseignantStats } from '../../core/models';
   styleUrls: ['./enseignants.component.scss']
 })
 export class EnseignantsComponent implements OnInit {
-  enseignants: Enseignant[] = [];
+  tous: Enseignant[] = [];
+  filtres: Enseignant[] = [];
   selected: Enseignant | null = null;
-  selectedStats: EnseignantStats | null = null;
   showForm = false;
   loading = false;
   errorMsg = '';
   successMsg = '';
+  filtreRole = '';
   form: FormGroup;
-  editForm: FormGroup;
-  editMode = false;
+
+  roles = [
+    { value: '',           label: 'Tous les rôles' },
+    { value: 'ENSEIGNANT', label: 'Enseignants' },
+    { value: 'RESP_UP',    label: 'Responsables UP' },
+    { value: 'CHEF_SERVICE', label: 'Chefs de service' }
+  ];
 
   constructor(
-    private enseignantsService: EnseignantsService,
     public auth: AuthService,
+    private enseignantsService: EnseignantsService,
     private fb: FormBuilder
   ) {
     this.form = this.fb.group({
-      email:  ['', [Validators.required, Validators.email]],
-      nom:    ['', Validators.required],
-      prenom: ['', Validators.required],
-      role:   ['ENSEIGNANT']
-    });
-
-    this.editForm = this.fb.group({
-      nom:    ['', Validators.required],
-      prenom: ['', Validators.required],
-      actif:  [true]
+      nom:      ['', Validators.required],
+      prenom:   ['', Validators.required],
+      email:    ['', [Validators.required, Validators.email]],
+      role:     ['ENSEIGNANT', Validators.required],
+      specialite: [''],
+      grade:    ['']
     });
   }
 
@@ -45,89 +47,91 @@ export class EnseignantsComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.enseignantsService.getAll().subscribe({
-      next: res => { this.enseignants = res.data; this.loading = false; },
+      next: res => {
+        this.tous = res.data;
+        this.applyFilter();
+        this.loading = false;
+      },
       error: () => { this.loading = false; }
     });
   }
 
-  selectEnseignant(e: Enseignant): void {
-    this.editMode = false;
-    this.enseignantsService.getById(e.id).subscribe({
-      next: detail => {
-        this.selected = detail;
-        this.editForm.patchValue({
-          nom:    detail.nom,
-          prenom: detail.prenom,
-          actif:  detail.actif
-        });
+  applyFilter(): void {
+    this.filtres = this.filtreRole
+      ? this.tous.filter(e => e.role === this.filtreRole)
+      : [...this.tous];
+  }
+
+  onFiltreChange(role: string): void {
+    this.filtreRole = role;
+    this.applyFilter();
+  }
+
+  toggleActif(e: Enseignant): void {
+    const newActif = !e.actif;
+    this.enseignantsService.update(e.id, { actif: newActif }).subscribe({
+      next: () => {
+        e.actif = newActif;
+        this.successMsg = `${e.prenom} ${e.nom} ${newActif ? 'activé' : 'désactivé'}`;
+        setTimeout(() => this.successMsg = '', 3000);
+      },
+      error: err => {
+        this.errorMsg = err.error?.error || 'Erreur lors de la mise à jour';
+        setTimeout(() => this.errorMsg = '', 3000);
       }
     });
-    this.enseignantsService.getStats(e.id).subscribe({
-      next: stats => this.selectedStats = stats,
+  }
+
+  openDetail(e: Enseignant): void {
+    this.selected = e;
+    this.enseignantsService.getById(e.id).subscribe({
+      next: res => this.selected = res,
       error: () => {}
     });
   }
 
-  closeDetail(): void {
-    this.selected      = null;
-    this.selectedStats = null;
-    this.editMode      = false;
-  }
+  closeDetail(): void { this.selected = null; }
 
   onCreate(): void {
     if (this.form.invalid) return;
-    this.loading  = true;
-    this.errorMsg = '';
+    this.loading = true;
     this.enseignantsService.create(this.form.value).subscribe({
       next: () => {
-        this.loading     = false;
-        this.successMsg  = 'Enseignant créé avec succès';
+        this.loading = false;
+        this.successMsg = 'Membre du personnel créé avec succès';
         this.form.reset({ role: 'ENSEIGNANT' });
-        this.showForm    = false;
+        this.showForm = false;
         this.load();
+        setTimeout(() => this.successMsg = '', 4000);
       },
       error: err => {
-        this.loading  = false;
+        this.loading = false;
         this.errorMsg = err.error?.error || 'Erreur lors de la création';
       }
     });
   }
 
-  onUpdate(): void {
-    if (!this.selected || this.editForm.invalid) return;
-    this.enseignantsService.update(this.selected.id, this.editForm.value).subscribe({
-      next: () => {
-        this.successMsg = 'Profil mis à jour';
-        this.editMode   = false;
-        this.load();
-        this.selectEnseignant(this.selected!);
-      },
-      error: err => {
-        this.errorMsg = err.error?.error || 'Erreur mise à jour';
-      }
-    });
+  getRoleLabel(role: string): string {
+    const map: Record<string, string> = {
+      ENSEIGNANT:    'Enseignant',
+      RESP_UP:       'Resp. UP',
+      CHEF_SERVICE:  'Chef de service',
+      DIRECTEUR:     'Directeur'
+    };
+    return map[role] || role;
   }
 
-  toggleActif(e: Enseignant): void {
-    this.enseignantsService.update(e.id, { actif: !e.actif }).subscribe({
-      next: () => this.load(),
-      error: err => alert(err.error?.error || 'Erreur')
-    });
+  getRoleColor(role: string): string {
+    const map: Record<string, string> = {
+      ENSEIGNANT:   'blue',
+      RESP_UP:      'purple',
+      CHEF_SERVICE: 'orange',
+      DIRECTEUR:    'navy'
+    };
+    return map[role] || 'grey';
   }
 
-  getVolumePercent(e: Enseignant): number {
-    return Math.round((e.volume_h_total / 300) * 100);
-  }
-
-  getVolumeColor(total: number): string {
-    if (total >= 270) return '#e53935';
-    if (total >= 240) return '#fb8c00';
-    return '#43a047';
-  }
-
-  getAlerteClass(alerte: string): string {
-    if (alerte === 'CRITIQUE')  return 'critique';
-    if (alerte === 'ATTENTION') return 'attention';
-    return '';
+  getInitials(e: Enseignant): string {
+    return `${e.prenom[0]}${e.nom[0]}`.toUpperCase();
   }
 }

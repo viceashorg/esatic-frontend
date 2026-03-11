@@ -1,5 +1,6 @@
 export type Role = 'ENSEIGNANT' | 'RESP_UP' | 'CHEF_SERVICE' | 'DIRECTEUR';
 export type Semestre = 'S1' | 'S2';
+export type Niveau = 'LICENCE' | 'MASTER';
 export type StatutSyllabus = 'BROUILLON' | 'EN_ATTENTE_UP' | 'EN_ATTENTE_CHEF' | 'EN_ATTENTE_DIRECTEUR' | 'VALIDE' | 'REJETE';
 export type StatutReunion = 'PLANIFIEE' | 'EN_COURS' | 'TERMINEE' | 'ANNULEE';
 
@@ -10,29 +11,42 @@ export interface User {
 export interface LoginRequest { email: string; password: string; }
 export interface LoginResponse { token: string; role: Role; user: User; }
 
+export interface UnitePedagogique {
+  id: string; nom: string; responsable_id?: string;
+}
+
 export interface Cours {
   id: string; intitule: string; code: string;
   credits: number; volume_h: number; semestre: Semestre;
+  niveau?: Niveau; filiere?: string;
   enseignant: { id: string; nom: string; prenom: string; };
   unite_pedagogique: { id: string; nom: string; };
 }
 export interface CreateCoursRequest {
   up_id: string; enseignant_id: string; intitule: string;
   code: string; credits: number; volume_h: number; semestre: Semestre;
+  niveau?: Niveau; filiere?: string;
 }
 
 export interface Syllabus {
   id: string; cours_id: string;
-  cours?: { intitule: string; code: string; };
+  cours?: { id: string; intitule: string; code: string; };
   contenu: string; objectifs?: string;
+  competences?: string;
+  modalites_evaluation?: string;
+  references_bibliographiques?: string;
   statut: StatutSyllabus; created_at: string;
 }
-export interface CreateSyllabusRequest { cours_id: string; contenu: string; objectifs?: string; }
+export interface CreateSyllabusRequest {
+  cours_id: string; contenu: string; objectifs?: string;
+  competences?: string; modalites_evaluation?: string;
+  references_bibliographiques?: string;
+}
 export interface UpdateStatutSyllabusRequest { statut: StatutSyllabus; commentaire?: string; }
 
 export interface Progression {
   id: string; cours_id: string;
-  cours?: { intitule: string; code: string; };
+  cours?: { id: string; intitule: string; code: string; };
   taux_avancement: number; commentaire?: string; created_at: string;
 }
 export interface CreateProgressionRequest { cours_id: string; taux_avancement: number; commentaire?: string; }
@@ -52,8 +66,9 @@ export interface Notification { id: string; titre: string; message: string; lu: 
 export interface Enseignant {
   id: string; nom: string; prenom: string; email: string;
   role: Role; actif: boolean; created_at: string;
+  specialite?: string; grade?: string;
   nb_cours: number; volume_h_total: number; volume_h_restant: number;
-  cours?: any[];
+  cours?: Cours[];
 }
 export interface EnseignantStats {
   enseignant_id: string; nb_cours: number;
@@ -61,7 +76,11 @@ export interface EnseignantStats {
   alerte: '' | 'ATTENTION' | 'CRITIQUE';
   taux_moyen_progression: number; nb_syllabus_valides: number; nb_reunions: number;
 }
-export interface CreateEnseignantRequest { email: string; nom: string; prenom: string; role?: 'ENSEIGNANT' | 'RESP_UP'; }
-export interface UpdateEnseignantRequest { nom?: string; prenom?: string; actif?: boolean; }
+export interface CreateEnseignantRequest {
+  email: string; nom: string; prenom: string;
+  role?: 'ENSEIGNANT' | 'RESP_UP';
+  specialite?: string; grade?: string;
+}
+export interface UpdateEnseignantRequest { nom?: string; prenom?: string; actif?: boolean; specialite?: string; grade?: string; }
 
 export interface ApiList<T> { count: number; data: T[]; }

@@ -5,103 +5,177 @@
       <h1>Cours</h1>
       <p>{{ cours.length }} cours enregistrés</p>
     </div>
-    <div class="actions">
-      <select (change)="onSemestreChange($event)">
-        <option value="">Tous les semestres</option>
-        <option value="S1">Semestre 1</option>
-        <option value="S2">Semestre 2</option>
-      </select>
-      <button
-        class="btn-primary"
-        *ngIf="auth.hasMinRole('RESP_UP')"
-        (click)="showForm = !showForm">
-        {{ showForm ? 'Annuler' : '+ Nouveau cours' }}
+    <div class="header-actions">
+      <div class="filter-wrap">
+        <span class="material-icons-round">filter_list</span>
+        <select (change)="onSemestreChange($event)">
+          <option value="">Tous les semestres</option>
+          <option value="S1">Semestre 1</option>
+          <option value="S2">Semestre 2</option>
+        </select>
+      </div>
+      <button class="btn-primary" (click)="openForm()" *ngIf="!showForm">
+        <span class="material-icons-round">add</span>
+        Nouveau cours
+      </button>
+      <button class="btn-ghost" (click)="cancelForm()" *ngIf="showForm">
+        <span class="material-icons-round">close</span>
+        Annuler
       </button>
     </div>
   </div>
 
   <!-- Formulaire création -->
   <div class="form-card" *ngIf="showForm">
-    <h3>Créer un cours</h3>
-    <form [formGroup]="form" (ngSubmit)="onCreate()">
-      <div class="form-grid">
+    <div class="form-card-header">
+      <span class="material-icons-round">menu_book</span>
+      <h2>Créer un cours</h2>
+    </div>
+
+    <div class="loading-overlay" *ngIf="loadingSelects">
+      <span class="spinner"></span> Chargement des données...
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onCreate()" *ngIf="!loadingSelects">
+      <div class="form-grid two">
         <div class="field">
-          <label>Intitulé *</label>
-          <input formControlName="intitule" placeholder="Algorithmique avancée" />
+          <label>Intitulé <span class="req">*</span></label>
+          <input formControlName="intitule" placeholder="Ex: Algorithmique avancée" />
         </div>
         <div class="field">
-          <label>Code *</label>
-          <input formControlName="code" placeholder="INFO-401" />
-        </div>
-        <div class="field">
-          <label>ID Enseignant *</label>
-          <input formControlName="enseignant_id" placeholder="UUID enseignant" />
-        </div>
-        <div class="field">
-          <label>ID Unité Pédagogique *</label>
-          <input formControlName="up_id" placeholder="UUID UP" />
-        </div>
-        <div class="field">
-          <label>Volume horaire * <span class="hint">(max 300h/an)</span></label>
-          <input type="number" formControlName="volume_h" min="1" max="300" />
-        </div>
-        <div class="field">
-          <label>Crédits *</label>
-          <input type="number" formControlName="credits" min="1" />
-        </div>
-        <div class="field">
-          <label>Semestre *</label>
-          <select formControlName="semestre">
-            <option value="S1">Semestre 1</option>
-            <option value="S2">Semestre 2</option>
-          </select>
+          <label>Code <span class="req">*</span></label>
+          <input formControlName="code" placeholder="Ex: INFO-401" />
         </div>
       </div>
 
-      <div class="error-banner"   *ngIf="errorMsg">{{ errorMsg }}</div>
-      <div class="success-banner" *ngIf="successMsg">{{ successMsg }}</div>
+      <div class="form-grid two">
+        <div class="field">
+          <label>Enseignant <span class="req">*</span></label>
+          <div class="select-wrap">
+            <select formControlName="enseignant_id">
+              <option value="">— Sélectionner un enseignant —</option>
+              <option *ngFor="let e of enseignants" [value]="e.id">
+                {{ e.prenom }} {{ e.nom }} · {{ e.volume_h_restant }}h restantes
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Unité pédagogique <span class="req">*</span></label>
+          <div class="select-wrap">
+            <select formControlName="up_id">
+              <option value="">— Sélectionner une UP —</option>
+              <option *ngFor="let up of unitesPedagogiques" [value]="up.id">
+                {{ up.nom }}
+              </option>
+            </select>
+          </div>
+          <span class="field-hint" *ngIf="unitesPedagogiques.length === 0">
+            Aucune UP disponible — créez d'abord un cours pour initialiser les UPs
+          </span>
+        </div>
+      </div>
+
+      <div class="form-grid three">
+        <div class="field">
+          <label>Niveau <span class="req">*</span></label>
+          <div class="select-wrap">
+            <select formControlName="niveau">
+              <option *ngFor="let n of niveaux" [value]="n.value">{{ n.label }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Filière <span class="req">*</span></label>
+          <input formControlName="filiere" placeholder="Ex: MBDS, Réseaux..." />
+        </div>
+        <div class="field">
+          <label>Semestre <span class="req">*</span></label>
+          <div class="select-wrap">
+            <select formControlName="semestre">
+              <option *ngFor="let s of semestres" [value]="s.value">{{ s.label }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid two">
+        <div class="field">
+          <label>Volume horaire <span class="req">*</span>
+          </label>
+          <div class="input-with-unit">
+            <input type="number" formControlName="volume_h" min="1" max="300" placeholder="0" />
+            <span class="unit">h</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Crédits <span class="req">*</span></label>
+          <div class="input-with-unit">
+            <input type="number" formControlName="credits" min="1" placeholder="0" />
+            <span class="unit">cr</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="error-msg" *ngIf="errorMsg">
+        <span class="material-icons-round">error_outline</span>{{ errorMsg }}
+      </div>
+      <div class="success-msg" *ngIf="successMsg">
+        <span class="material-icons-round">check_circle</span>{{ successMsg }}
+      </div>
 
       <div class="form-actions">
-        <button type="button" class="btn-secondary" (click)="showForm = false">
-          Annuler
-        </button>
-        <button type="submit" class="btn-primary" [disabled]="form.invalid || loading">
-          {{ loading ? 'Création...' : 'Créer le cours' }}
+        <button type="button" class="btn-ghost" (click)="cancelForm()">Annuler</button>
+        <button type="submit" class="btn-primary" [disabled]="loading || form.invalid">
+          <span class="material-icons-round">add</span>
+          Créer le cours
         </button>
       </div>
     </form>
   </div>
 
-  <!-- Table -->
-  <div class="table-card">
-    <div class="loading" *ngIf="loading && cours.length === 0">Chargement...</div>
-    <table *ngIf="!loading || cours.length > 0">
-      <thead>
-        <tr>
-          <th>Intitulé</th>
-          <th>Code</th>
-          <th>Enseignant</th>
-          <th>Unité Pédagogique</th>
-          <th>Volume</th>
-          <th>Crédits</th>
-          <th>Semestre</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let c of cours">
-          <td><strong>{{ c.intitule }}</strong></td>
-          <td><span class="badge-code">{{ c.code }}</span></td>
-          <td>{{ c.enseignant.prenom }} {{ c.enseignant.nom }}</td>
-          <td>{{ c.unite_pedagogique.nom }}</td>
-          <td><span class="vol">{{ c.volume_h }}h</span></td>
-          <td>{{ c.credits }}</td>
-          <td><span class="badge-sem">{{ c.semestre }}</span></td>
-        </tr>
-      </tbody>
-    </table>
-    <p class="empty" *ngIf="!loading && cours.length === 0">
-      Aucun cours trouvé
-    </p>
+  <!-- Liste des cours -->
+  <div class="cours-grid" *ngIf="!loading && cours.length > 0">
+    <div class="cours-card" *ngFor="let c of cours">
+      <div class="cours-card-top">
+        <div class="cours-meta">
+          <span class="code-badge">{{ c.code }}</span>
+          <span class="semestre-chip">{{ c.semestre }}</span>
+          <span class="niveau-chip" *ngIf="c.niveau">{{ c.niveau }}</span>
+        </div>
+        <h3>{{ c.intitule }}</h3>
+        <p class="filiere" *ngIf="c.filiere">{{ c.filiere }}</p>
+      </div>
+      <div class="cours-card-body">
+        <div class="info-row">
+          <span class="material-icons-round">person</span>
+          <span>{{ c.enseignant.prenom }} {{ c.enseignant.nom }}</span>
+        </div>
+        <div class="info-row">
+          <span class="material-icons-round">account_tree</span>
+          <span>{{ c.unite_pedagogique.nom }}</span>
+        </div>
+        <div class="cours-stats">
+          <div class="stat">
+            <span class="material-icons-round">schedule</span>
+            <strong>{{ c.volume_h }}h</strong>
+          </div>
+          <div class="stat">
+            <span class="material-icons-round">stars</span>
+            <strong>{{ c.credits }} cr</strong>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
+  <div class="empty-state" *ngIf="!loading && cours.length === 0">
+    <span class="material-icons-round">menu_book</span>
+    <p>Aucun cours enregistré</p>
+    <button class="btn-primary" (click)="openForm()">Créer le premier cours</button>
+  </div>
+
+  <div class="loading-state" *ngIf="loading">
+    <span class="spinner"></span>
+  </div>
 </div>
